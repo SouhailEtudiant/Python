@@ -1,6 +1,10 @@
 
 FROM ubuntu:latest
 RUN apt-get update && apt-get install python3-pip -y
+# Install any needed packages specified in requirements.txt
+RUN pip install paho-mqtt opencv-python
+# Install Ultralytics' YOLOv5
+RUN pip install ultralytics
 ADD FirstTestWebCam.py FirstTestWebCam.py
 ADD PublishToTopic.py PublishToTopic.py
 ADD RecieveMessageAndSaveToDataBase.py RecieveMessageAndSaveToDataBase.py

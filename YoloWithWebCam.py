@@ -13,42 +13,42 @@ from datetime import datetime
 import json
 
 
-# setting callbacks for different events to see if it works, print the message etc.
+# définir des rappels pour différents événements pour voir si cela fonctionne, imprimer le message, etc.
 def on_connect(client, userdata, flags, rc, properties=None):
     print("CONNACK received with code %s." % rc)
 
-# with this callback you can see if your publish was successful
+# avec cette appel on peut vérifier si la publication a réussi 
 def on_publish(client, userdata, mid, properties=None):
     print("mid: " + str(mid))
 
-# print which topic was subscribed to
+# afficher le topic qu'on va utilisé
 def on_subscribe(client, userdata, mid, granted_qos, properties=None):
     print("Subscribed: " + str(mid) + " " + str(granted_qos))
 
-# print message, useful for checking if it was successful
+# mprimer un message, utile pour vérifier si l'opération a réussi
 def on_message(client, userdata, msg):
     print(msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
 
-# using MQTT version 5 here, for 3.1.1: MQTTv311, 3.1: MQTTv31
-# userdata is user defined data of any type, updated by user_data_set()
-# client_id is the given name of the client
+# en utilisant MQTT version 5 ici, pour 3.1.1 : MQTTv311, 3.1 : MQTTv31
+# userdata est une donnée définie par l'utilisateur de tout type, mise à jour par user_data_set()
+# client_id est le prénom du client
 client = paho.Client(client_id="", userdata=None, protocol=paho.MQTTv5)
 client.on_connect = on_connect
 
-# enable TLS for secure connection
+# activer TLS pour une connexion sécurisée
 client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
-# set username and password
+# définir le nom d'utilisateur et le mot de passe
 client.username_pw_set("souhail", "Hs@16071998")
-# connect to HiveMQ Cloud on port 8883 (default for MQTT)
+# connectez a HiveMQ Cloud sur le port 8883 (par défaut pour MQTT)
 client.connect("61008efe1d534822a830a4f7aa032b30.s1.eu.hivemq.cloud", 8883)
 
-# setting callbacks, use separate functions like above for better visibility
+# définition des rappels, utilisez des fonctions distinctes comme ci-dessus pour une meilleure visibilité
 client.on_subscribe = on_subscribe
 client.on_message = on_message
 client.on_publish = on_publish
 
 
-# start webcam
+# démarrer la webcam
 cap = cv2.VideoCapture(0)
 cap.set(3, 640)
 cap.set(4, 480)
@@ -56,7 +56,7 @@ cap.set(4, 480)
 # model
 model = YOLO("yolo-Weights/yolov8n.pt")
 
-# object classes
+# les classes d'objet
 classNames = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", "boat",
               "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat",
               "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella",
@@ -69,56 +69,56 @@ classNames = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "trai
               "teddy bear", "hair drier", "toothbrush"
               ]
 
-verif=True 
+
 while True:
          
     success, img = cap.read()
     results = model(img, stream=True)
 
-    # coordinates
+    # coordonnées
     for r in results:
         boxes = r.boxes
 
         for box in boxes:
-            # bounding box
+            # boîte englobante
             x1, y1, x2, y2 = box.xyxy[0]
             x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2) # convert to int values
 
-            # put box in cam
+            # mettre la boîte dans la caméra
             cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 255), 3)
 
-            # confidence
+            # confiance
             confidence = math.ceil((box.conf[0]*100))/100
             print("Confidence --->",confidence)
 
-            # class name
+            # non du classe détécté
             cls = int(box.cls[0])
             print("Class name -->", classNames[cls])
-            # datetime object containing current date and time
+            # objet datetime contenant la date et l'heure actuelles
             now = datetime.now()
             # dd/mm/YY H:M:S
             dt_string = now.strftime("%Y-%m-%d %H:%M:%S")
             print("date and time =", dt_string)
            
-            # object details
+            # détails de l'objet
             org = [x1, y1]
             font = cv2.FONT_HERSHEY_SIMPLEX
             fontScale = 1
             color = (255, 0, 0)
             thickness = 2
-
+            # la définition du coleur , text a afficher etc. de la boite de détectation
             cv2.putText(img, classNames[cls]+" "+str(confidence), org, font, fontScale, color, thickness)
 
     cv2.imshow('Webcam', img)
-   
+    # En cliqunt sur Q
     if cv2.waitKey(1) == ord('q'):
-        # x Python object (dict):
+        # x objet python
         x = { "class": classNames[cls] , "confidence" : confidence , "datetime" : dt_string}
-        # convert into JSON:
+        # convert l'objet x vers JSON
         y = json.dumps(x)
-        # subscribe to all topics of encyclopedia by using the wildcard "#"
+        # subscribe du topic iot
         client.subscribe("iot/#", qos=1)
-        # a single publish, this can also be done in loops, etc.
+        # publish de l'objet JSON y vers le topic iot
         client.publish("iot", payload=y, qos=1)
    
     

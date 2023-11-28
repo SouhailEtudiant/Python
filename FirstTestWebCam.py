@@ -3,7 +3,7 @@
 """
 Created on Fri Oct 27 18:17:08 2023
 
-@author: hjr & Nizar...................
+@author: hjr & Nizar........................
 """
 
 import cv2 # importing cv2 liberary
